@@ -1,0 +1,6 @@
+---
+- hosts: "{{ target }}"
+  become: true
+  strategy: free
+  roles:
+    - imntreal.smallstep-ca

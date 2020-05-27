@@ -1,0 +1,13 @@
+---
+### User and group creation
+- name: create Epic groups
+  group:
+    name: "{{ item['name'] }}"
+    gid: "{{ item['gid'] }}"
+    state: present
+  loop:
+    - {name: 'epicsys', gid: 10000}
+    - {name: 'epicuser', gid: 10001}
+    - {name: 'cachegrp', gid: 10002}
+    - {name: 'dmngrp', gid: 10003}
+    - {name: 'iscagent', gid: 10004}
