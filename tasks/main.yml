@@ -34,9 +34,9 @@
     group: root
     mode: "{{ item.mode }}"
   loop:
-    - {src=/tmp/step-certificates_{{ smallstep_version }}/bin/step-ca, dest=/usr/bin/step-ca, mode=0775}
-    - {src=/tmp/step-certificates_{{ smallstep_version }}/bin/step-cloudkms-init, dest=/usr/bin/step-cloudkms-init, mode=0775}
-    - {src=/tmp/step-certificates_{{ smallstep_version }}/README.md, dest=/usr/share/step-certificates/doc/README.md, mode=0664}
+    - {src="/tmp/step-certificates_{{ smallstep_version }}/bin/step-ca", dest=/usr/bin/step-ca, mode=0775}
+    - {src="/tmp/step-certificates_{{ smallstep_version }}/bin/step-cloudkms-init", dest=/usr/bin/step-cloudkms-init, mode=0775}
+    - {src="/tmp/step-certificates_{{ smallstep_version }}/README.md", dest=/usr/share/step-certificates/doc/README.md, mode=0664}
   become: true
 - name: Install systemd unit
   copy:
