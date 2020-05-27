@@ -8,7 +8,7 @@
     force: true
 - name: Download step-cli
   get_url:
-    url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_version }}/step-cli_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
+    url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_version }}/step_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-cli.tar.gz
     mode: u=rwx,g=rx,o=rx
     force: true
