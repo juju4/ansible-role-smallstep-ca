@@ -9,7 +9,7 @@
 
 - name: Untar package
   unarchive:
-      src: /tmp/step-certificates.tar.gz
-      dest: /tmp
-      remote_src: yes
-    become: true
+    src: /tmp/step-certificates.tar.gz
+    dest: /tmp
+    remote_src: yes
+  become: true
