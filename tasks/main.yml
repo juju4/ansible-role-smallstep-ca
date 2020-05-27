@@ -1,16 +1,25 @@
 ---
-### Download and unpack Go binary
+### Download and unpack Go binaries
 - name: Download step-certificates
   get_url:
     url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-certificates.tar.gz
     mode: u=rwx,g=rx,o=rx
     force: true
-- name: Untar package
+- name: Download step-cli
+  get_url:
+    url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_version }}/step-cli_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
+    dest: /tmp/step-cli.tar.gz
+    mode: u=rwx,g=rx,o=rx
+    force: true
+- name: Untar packages
   unarchive:
-    src: /tmp/step-certificates.tar.gz
+    src: "/tmp/{{ item }}"
     dest: /tmp
     remote_src: true
+  loop:
+    - step-scertificates.tar.gz
+    - step-cli.tar.gz
 
 ### Make sure directories exist, and copy files into them
 - name: Create directories
@@ -24,8 +33,9 @@
     - /usr/bin
     - /usr/lib/systemd/system
     - /usr/share/step-certificates/doc
+    - /usr/share/step-cli/doc
   become: true
-- name: Copy binary files
+- name: Copy certificates binary files
   copy:
     src: "/tmp/step-certificates_{{ smallstep_version }}/bin/{{ item }}"
     dest: "/usr/bin/{{ item }}"
@@ -37,7 +47,8 @@
     - step-ca
     - step-cloudkms-init
   become: true
-- name: Copy README
+  notify: restart_ca_service
+- name: Copy certificates README
   copy:
     src: /tmp/step-certificates_{{ smallstep_version }}/README.md
     dest: /usr/share/step-certificates/doc/README.md
@@ -51,6 +62,20 @@
     group: root
     mode: 0664
   become: true
+- name: Copy cli binary
+  copy:
+    src: /tmp/step-cli_{{ smallstep_version}}/bin/step
+    dest: /usr/bin/step
+    remote_src: true
+    owner: root
+    group: root
+    mode: 0775
+- name: Copy cli README
+  copy:
+    src: /tmp/step-cli_{{ smallstep_version }}/README.md
+    dest: /usr/share/step-cli/doc/README.md
+    mode: 0664
+  become: true
 
 ### Create user, and assign permissions
 - name: Add step group
@@ -61,3 +86,21 @@
     group: step
     home: /var/lib/step
     create_home: true
+
+### Create password file
+- name: Create password file
+  file:
+    path: /var/lib/step/.password
+    state: file
+    owner: step
+    group: step
+    mode: 0600
+
+### Check for, and create config when needed
+- name: Check for CA config
+  stat:
+    path: /var/lib/step/.step/config/ca.json
+  register: ca_config
+- name: Initialize CA
+  command: step ca init --name=Smallstep --dns={{ ansible_fqdn }} --address=127.0.0.1:8443 --provisioner={{ smallstep_provisioner }} --provisioner-password-file=/var/lib/step/.password  --with-ca-url=https://{{ ansible_fqdn }}
+  when: not ca_config['stat']['exists']
