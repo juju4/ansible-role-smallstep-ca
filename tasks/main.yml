@@ -95,12 +95,36 @@
 
 - block:
   ### Create password files
-  - name: Get encyrption password
+  - name: Generate encyrption password
     set_fact:
-      smallstep_encryption_password: "{{ lookup('password', '/var/lib/step/.password') }}"
-  - name: Get provisioner password
+      smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
+  - name: Generate provisioner password
     set_fact:
-      smallstep_encryption_password: "{{ lookup('password', '/tmp/provisioner_password') }}"
+      smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
+  - name: Create encryption password file
+    file:
+      path: /var/lib/step/.password
+      state: touch
+      owner: step
+      group: step
+      mode: 0660
+    register: encryption_password_file
+  - name: Create provisioner password file
+    file:
+      path: /tmp/provisioner_password
+      state: touch
+      mode: 0666
+    register: provisioner_password_file
+  - name: Write encryption password to file
+    copy:
+      content: "{{ smallstep_encryption_password }}"
+      dest: /var/lib/step/.password
+    when: encryption_password_file['size'] == 0
+  - name: Write provisioner password to file
+    copy:
+      content: "{{ smallstep_provisioner_password }}"
+      dest: /tmp/provisioner_password
+    when: provisioner_password_file['size'] == 0
   ### Initialize CA
   - name: Initialize CA
     command: step ca init --name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}
