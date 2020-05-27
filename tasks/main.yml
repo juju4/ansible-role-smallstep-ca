@@ -1,15 +1,58 @@
 ---
-### Download Go binary
+### Download and unpack Go binary
 - name: Download step-certificates
   get_url:
-    url: "https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz"
-    dest: "/tmp/step-certificates.tar.gz"
+    url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
+    dest: /tmp/step-certificates.tar.gz
     mode: u=rwx,g=rx,o=rx
-    force: yes
-
+    force: true
 - name: Untar package
   unarchive:
     src: /tmp/step-certificates.tar.gz
     dest: /tmp
-    remote_src: yes
+    remote_src: true
+
+### Make sure directories exist, and copy files into them
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+  loop:
+    - /usr/bin
+    - /usr/lib/systemd/system
+    - /usr/share/step-certificates/doc
   become: true
+- name: Copy remote files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - {src=/tmp/step-certificates_{{ smallstep_version }}/bin/step-ca, dest=/usr/bin/step-ca, mode=0775}
+    - {src=/tmp/step-certificates_{{ smallstep_version }}/bin/step-cloudkms-init, dest=/usr/bin/step-cloudkms-init, mode=0775}
+    - {src=/tmp/step-certificates_{{ smallstep_version }}/README.md, dest=/usr/share/step-certificates/doc/README.md, mode=0664}
+  become: true
+- name: Install systemd unit
+  copy:
+    src: step-ca.service
+    dest: /usr/lib/systemd/system/step-ca.service
+    owner: root
+    group: root
+    mode: 0664
+  become: true
+
+### Create user, and assign permissions
+- name: Add step group
+  group: name=step
+- name: Add step user
+  user:
+    name: step
+    group: step
+    home: /var/lib/step
+    create_home: true
