@@ -18,7 +18,7 @@
     dest: /tmp
     remote_src: true
   loop:
-    - step-scertificates.tar.gz
+    - step-certificates.tar.gz
     - step-cli.tar.gz
 
 ### Make sure directories exist, and copy files into them
