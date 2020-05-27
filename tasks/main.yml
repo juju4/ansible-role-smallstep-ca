@@ -1,8 +1,15 @@
 ---
 ### Download Go binary
-  - name: Download step-certificates
-    get_url:
-      url: "https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz"
-      dest: "/tmp/step-certificates.tar.gz"
-      mode: u=rwx,g=rx,o=rx
-      force: yes
+- name: Download step-certificates
+  get_url:
+    url: "https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz"
+    dest: "/tmp/step-certificates.tar.gz"
+    mode: u=rwx,g=rx,o=rx
+    force: yes
+
+- name: Untar package
+  unarchive:
+      src: /tmp/step-certificates.tar.gz
+      dest: /tmp
+      remote_src: yes
+    become: true
