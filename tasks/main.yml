@@ -2,7 +2,7 @@
 ### Download Go binary
   - name: Download step-certificates
     get_url:
-      url: "https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_{{ smallstep_version }}_{{ smallstep_arch| default('amd64') }}.tar.gz"
+      url: "https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz"
       dest: "/tmp/step-certificates.tar.gz"
       mode: u=rwx,g=rx,o=rx
       force: yes
