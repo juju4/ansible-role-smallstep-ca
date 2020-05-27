@@ -100,7 +100,7 @@
       smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
   - name: Generate provisioner password
     set_fact:
-      smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
+      smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
   - name: Create encryption password file
     file:
       path: /var/lib/step/.password
