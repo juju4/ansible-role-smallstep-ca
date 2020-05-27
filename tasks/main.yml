@@ -4,13 +4,13 @@
   get_url:
     url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_version }}/step-certificates_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-certificates.tar.gz
-    mode: u=rwx,g=rx,o=rx
+    mode: 0664
     force: true
 - name: Download step-cli
   get_url:
     url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_version }}/step_linux_{{ smallstep_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-cli.tar.gz
-    mode: u=rwx,g=rx,o=rx
+    mode: 0664
     force: true
 - name: Untar packages
   unarchive:
@@ -64,7 +64,7 @@
   become: true
 - name: Copy cli binary
   copy:
-    src: /tmp/step-cli_{{ smallstep_version}}/bin/step
+    src: /tmp/step_{{ smallstep_version}}/bin/step
     dest: /usr/bin/step
     remote_src: true
     owner: root
@@ -72,7 +72,7 @@
     mode: 0775
 - name: Copy cli README
   copy:
-    src: /tmp/step-cli_{{ smallstep_version }}/README.md
+    src: /tmp/step_{{ smallstep_version }}/README.md
     dest: /usr/share/step-cli/doc/README.md
     mode: 0664
   become: true
