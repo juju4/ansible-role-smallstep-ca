@@ -13,9 +13,11 @@ Role Variables
 --------------
 
 Found in `defaults/main.yml` (can be overridden in inventory):
-
     smallstep_version: Version of Smallstep Certificates to install
     smallstep_arch: Architecture to use. Must be amd64, arm64, or arm7.
+
+Required in inventory:
+    smallstep_provisioner: Name of initial provisioner to use in CA initialization
 
 Dependencies
 ------------
@@ -25,8 +27,12 @@ No other roles are required
 Example Playbook
 ----------------
 
-playbook:
+inventory:
+    all:
+      step-ca:
+        smallstep_provisioner: imntreal@gmail.com
 
+playbook:
     - hosts: step-ca
       roles: imntreal.smallstep-ca
 

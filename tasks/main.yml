@@ -87,20 +87,23 @@
     home: /var/lib/step
     create_home: true
 
-### Create password file
-- name: Create password file
-  file:
-    path: /var/lib/step/.password
-    state: file
-    owner: step
-    group: step
-    mode: 0600
-
 ### Check for, and create config when needed
 - name: Check for CA config
   stat:
     path: /var/lib/step/.step/config/ca.json
   register: ca_config
-- name: Initialize CA
-  command: step ca init --name=Smallstep --dns={{ ansible_fqdn }} --address=127.0.0.1:8443 --provisioner={{ smallstep_provisioner }} --provisioner-password-file=/var/lib/step/.password  --with-ca-url=https://{{ ansible_fqdn }}
+
+- block:
+  ### Create password files
+  - name: Get encyrption password
+    set_fact:
+      smallstep_encryption_password: "{{ lookup('password', '/var/lib/step/.password') }}"
+  - name: Get provisioner password
+    set_fact:
+      smallstep_encryption_password: "{{ lookup('password', '/tmp/provisioner_password') }}"
+  ### Initialize CA
+  - name: Initialize CA
+    command: step ca init --name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}
+  - debug: msg="Provisioner password is stored in /tmp/provisioner_password. Please, move its contents to a password vault, and remove the file."
+
   when: not ca_config['stat']['exists']
