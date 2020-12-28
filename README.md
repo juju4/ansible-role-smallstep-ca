@@ -13,7 +13,8 @@ Role Variables
 --------------
 
 Found in `defaults/main.yml` (can be overridden in inventory):
-    smallstep_version: Version of Smallstep Certificates to install
+    smallstep_ca_version: Version of Smallstep Certificates to install
+    smallstep_cli_version: Version of Smallstep step cli to install
     smallstep_arch: Architecture to use. Must be amd64, arm64, or arm7.
 
 Required in inventory:
