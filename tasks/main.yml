@@ -52,6 +52,7 @@
   copy:
     src: /tmp/step-certificates_{{ smallstep_ca_version }}/README.md
     dest: /usr/share/step-certificates/doc/README.md
+    remote_src: true
     mode: 0664
   become: true
 - name: Install systemd unit
@@ -74,6 +75,7 @@
   copy:
     src: /tmp/step_{{ smallstep_cli_version }}/README.md
     dest: /usr/share/step-cli/doc/README.md
+    remote_src: true
     mode: 0664
   become: true
 
