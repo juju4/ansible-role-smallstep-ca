@@ -1,9 +1,9 @@
 ---
 ### Download and unpack Go binaries
-- name: Download step-certificates
+- name: Download step-ca
   get_url:
     url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_ca_version }}_{{ smallstep_arch }}.tar.gz
-    dest: /tmp/step-certificates.tar.gz
+    dest: /tmp/step-ca.tar.gz
     mode: 0664
     force: true
 
@@ -20,7 +20,7 @@
     dest: /tmp
     remote_src: true
   loop:
-    - step-certificates.tar.gz
+    - step-ca.tar.gz
     - step-cli.tar.gz
 
 ### Make sure directories exist, and copy files into them
@@ -34,13 +34,13 @@
   loop:
     - /usr/bin
     - /usr/lib/systemd/system
-    - /usr/share/step-certificates/doc
+    - /usr/share/step-ca/doc
     - /usr/share/step-cli/doc
   become: true
 
 - name: Copy certificates binary files
   copy:
-    src: "/tmp/step-certificates_{{ smallstep_ca_version }}/bin/{{ item }}"
+    src: "/tmp/step-ca_{{ smallstep_ca_version }}/bin/{{ item }}"
     dest: "/usr/bin/{{ item }}"
     remote_src: true
     owner: root
@@ -53,8 +53,8 @@
   notify: restart ca service
 - name: Copy certificates README
   copy:
-    src: /tmp/step-certificates_{{ smallstep_ca_version }}/README.md
-    dest: /usr/share/step-certificates/doc/README.md
+    src: /tmp/step-ca_{{ smallstep_ca_version }}/README.md
+    dest: /usr/share/step-ca/doc/README.md
     remote_src: true
     mode: 0664
   become: true
