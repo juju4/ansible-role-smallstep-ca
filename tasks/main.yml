@@ -2,7 +2,7 @@
 ### Download and unpack Go binaries
 - name: Download step-certificates
   get_url:
-    url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_ca_version }}/step-certificates_linux_{{ smallstep_ca_version }}_{{ smallstep_arch }}.tar.gz
+    url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_ca_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-certificates.tar.gz
     mode: 0664
     force: true
