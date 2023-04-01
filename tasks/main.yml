@@ -165,7 +165,7 @@
 
     ### Initialize CA
     - name: Initialize CA
-      ansible.builtin.command: step ca init --name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}
+      ansible.builtin.command: "step ca init {{ smallstep_ca_init_args }}"
       become_user: step
       become: true
       args:
