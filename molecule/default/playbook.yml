@@ -3,13 +3,13 @@
   hosts: all
 
   vars:
-    CacheInstances:
+    cache_instances:
       - 'prd'
 
-    EpicEnvironments:
+    epic_environments:
       - {Instance: 'PRD', Environment: 'PRD'}
 
   pre_tasks:
 
   roles:
-    - role: imntreal.smallstep-ca
+    - role: imntreal.smallstep_ca
