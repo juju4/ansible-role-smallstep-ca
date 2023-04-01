@@ -1,6 +1,12 @@
 ---
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: not is_container | bool
+
 - name: Restart ca service
   ansible.builtin.service:
     name: step-ca
     state: restarted
-    daemon_reload: true
+  when: not is_container | bool

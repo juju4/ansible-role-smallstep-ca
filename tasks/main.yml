@@ -79,6 +79,9 @@
     group: root
     mode: 0664
   become: true
+  notify:
+    - Reload systemd
+    - Restart ca service
 
 - name: Copy cli binary
   ansible.builtin.copy:
