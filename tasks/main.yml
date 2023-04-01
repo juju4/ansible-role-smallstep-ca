@@ -135,6 +135,7 @@
       ansible.builtin.copy:
         content: "{{ smallstep_encryption_password }}"
         dest: /var/lib/step/.password
+        owner: step
         mode: 0600
       when: encryption_password_file['size'] == 0
 
@@ -142,6 +143,7 @@
       ansible.builtin.copy:
         content: "{{ smallstep_provisioner_password }}"
         dest: /tmp/provisioner_password
+        owner: step
         mode: 0600
       when: provisioner_password_file['size'] == 0
 
