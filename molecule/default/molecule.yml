@@ -16,6 +16,9 @@ provisioner:
   name: ansible
   playbooks:
     converge: ${MOLECULE_PLAYBOOK:-playbook.yml}
+  config_options:
+    defaults:
+      verbosity: 2
 scenario:
   name: default
 verifier:
