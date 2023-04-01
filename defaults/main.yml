@@ -1,6 +1,6 @@
 ---
-smallstep_ca_version: 0.18.0
-smallstep_cli_version: 0.18.0
+smallstep_ca_version: 0.23.1
+smallstep_cli_version: 0.23.1
 smallstep_arch: amd64
 smallstep_nolog: true
 
