@@ -1,4 +1,16 @@
 ---
+
+- name: Set fact is_container
+  ansible.builtin.set_fact:
+    is_container: true
+  when: >
+    (ansible_virtualization_type is defined and
+      (ansible_virtualization_type == "docker"
+       or ansible_virtualization_type == "containerd"
+       or ansible_virtualization_type == "container"
+      )
+    )
+
 ### Download and unpack Go binaries
 - name: Download step-ca
   ansible.builtin.get_url:
@@ -161,6 +173,7 @@
         name: step-ca
         state: started
         enabled: true
+      when: not is_container | bool
     - name: Debug | message
       ansible.builtin.debug:
         msg: "Provisioner password is stored in /tmp/provisioner_password. Please, move its contents to a password vault, and remove the file."
