@@ -122,7 +122,7 @@
   when: not ca_config['stat']['exists']
   block:
     ### Create password files
-    - name: Generate encyrption password
+    - name: Generate encryption password
       ansible.builtin.set_fact:
         smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
       no_log: "{{ smallstep_nolog | bool }}"
