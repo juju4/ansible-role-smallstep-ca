@@ -22,13 +22,13 @@ jobs:
       max-parallel: 4
       matrix:
         include:
-          - molecule_distro: 'rockylinux9'
+          - molecule_distro: 'rockylinux:9'
             experimental: false
-          - molecule_distro: 'rockylinux8'
+          - molecule_distro: 'rockylinux:8'
             experimental: false
-          - molecule_distro: 'ubuntu2204'
+          - molecule_distro: 'ubuntu:22.04'
             experimental: true
-          - molecule_distro: 'ubuntu2004'
+          - molecule_distro: 'ubuntu:20.04'
             experimental: false
     env:
       ANSIBLE_CALLBACKS_ENABLED: profile_tasks
