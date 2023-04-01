@@ -2,5 +2,6 @@
 smallstep_ca_version: 0.18.0
 smallstep_cli_version: 0.18.0
 smallstep_arch: amd64
+smallstep_nolog: true
 
 is_container: false

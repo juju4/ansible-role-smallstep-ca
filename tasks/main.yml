@@ -125,10 +125,12 @@
     - name: Generate encyrption password
       ansible.builtin.set_fact:
         smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
 
     - name: Generate provisioner password
       ansible.builtin.set_fact:
         smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
 
     - name: Create encryption password file
       ansible.builtin.file:
