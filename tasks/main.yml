@@ -52,7 +52,7 @@
 
 - name: Copy certificates binary files
   ansible.builtin.copy:
-    src: "/tmp/step-ca_{{ smallstep_ca_version }}/bin/{{ item }}"
+    src: "/tmp/step-ca_{{ smallstep_ca_version }}/{{ item }}"
     dest: "/usr/bin/{{ item }}"
     remote_src: true
     owner: root
@@ -60,7 +60,6 @@
     mode: 0775
   loop:
     - step-ca
-    - step-cloudkms-init
   become: true
   notify: Restart ca service
 - name: Copy certificates README
