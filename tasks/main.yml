@@ -51,6 +51,7 @@
     - step-cloudkms-init
   become: true
   notify: restart ca service
+
 - name: Copy certificates README
   copy:
     src: /tmp/step-ca_{{ smallstep_ca_version }}/README.md
