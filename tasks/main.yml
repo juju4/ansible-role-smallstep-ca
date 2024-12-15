@@ -61,7 +61,7 @@
 
 - name: Copy certificates binary files
   ansible.builtin.copy:
-    src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca"
+    src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}/step-ca"
     dest: "/usr/bin/step-ca"
     remote_src: true
     owner: root
@@ -72,7 +72,7 @@
 
 - name: Copy certificates README
   ansible.builtin.copy:
-    src: /tmp/step-ca_{{ smallstep_ca_version }}/README.md
+    src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}/README.md"
     dest: /usr/share/step-ca/doc/README.md
     remote_src: true
     mode: 0664
