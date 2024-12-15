@@ -26,14 +26,22 @@
     mode: 0664
     force: true
 
+- name: Create temp directory for step-ca_{{ smallstep_ca_version }}
+  ansible.builtin.file:
+    path: /tmp/step-ca_{{ smallstep_ca_version }}
+    state: directory
+
 - name: Untar packages
   ansible.builtin.unarchive:
-    src: "/tmp/{{ item }}"
+    src: "/tmp/step-ca.tar.gz"
+    dest: /tmp/step-ca_{{ smallstep_ca_version }}
+    remote_src: true
+
+- name: Untar cli package
+  unarchive:
+    src: "/tmp/step-cli.tar.gz"
     dest: /tmp
     remote_src: true
-  loop:
-    - step-ca.tar.gz
-    - step-cli.tar.gz
 
 ### Make sure directories exist, and copy files into them
 - name: Create directories
@@ -52,16 +60,14 @@
 
 - name: Copy certificates binary files
   ansible.builtin.copy:
-    src: "/tmp/step-ca_{{ smallstep_ca_version }}/{{ item }}"
-    dest: "/usr/bin/{{ item }}"
+    src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca"
+    dest: "/usr/bin/step-ca"
     remote_src: true
     owner: root
     group: root
     mode: 0775
-  loop:
-    - step-ca
-  become: true
   notify: Restart ca service
+
 - name: Copy certificates README
   ansible.builtin.copy:
     src: /tmp/step-ca_{{ smallstep_ca_version }}/README.md
