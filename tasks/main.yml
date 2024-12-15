@@ -32,6 +32,12 @@
     state: directory
     mode: '0755'
 
+- name: Untar ca package
+  ansible.builtin.unarchive:
+    src: "/tmp/step-ca.tar.gz"
+    dest: /tmp/step-ca_{{ smallstep_ca_version }}
+    remote_src: true
+
 - name: Untar cli package
   ansible.builtin.unarchive:
     src: "/tmp/step-cli.tar.gz"
