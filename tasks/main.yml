@@ -1,4 +1,16 @@
 ---
+
+- name: Set fact is_container
+  ansible.builtin.set_fact:
+    is_container: true
+  when: >
+    (ansible_virtualization_type is defined and
+      (ansible_virtualization_type == "docker"
+       or ansible_virtualization_type == "containerd"
+       or ansible_virtualization_type == "container"
+      )
+    )
+
 ### Download and unpack Go binaries
 - name: Download step-ca
   ansible.builtin.get_url:
@@ -14,14 +26,22 @@
     mode: 0664
     force: true
 
+- name: Create temp directory for step-ca_{{ smallstep_ca_version }}
+  ansible.builtin.file:
+    path: /tmp/step-ca_{{ smallstep_ca_version }}
+    state: directory
+
 - name: Untar packages
   ansible.builtin.unarchive:
-    src: "/tmp/{{ item }}"
+    src: "/tmp/step-ca.tar.gz"
+    dest: /tmp/step-ca_{{ smallstep_ca_version }}
+    remote_src: true
+
+- name: Untar cli package
+  unarchive:
+    src: "/tmp/step-cli.tar.gz"
     dest: /tmp
     remote_src: true
-  loop:
-    - step-ca.tar.gz
-    - step-cli.tar.gz
 
 ### Make sure directories exist, and copy files into them
 - name: Create directories
@@ -65,6 +85,9 @@
     group: root
     mode: 0664
   become: true
+  notify:
+    - Reload systemd
+    - Restart ca service
 
 - name: Copy cli binary
   ansible.builtin.copy:
@@ -105,13 +128,15 @@
   when: not ca_config['stat']['exists']
   block:
     ### Create password files
-    - name: Generate encyrption password
+    - name: Generate encryption password
       ansible.builtin.set_fact:
         smallstep_encryption_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
 
     - name: Generate provisioner password
       ansible.builtin.set_fact:
         smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
 
     - name: Create encryption password file
       ansible.builtin.file:
@@ -133,6 +158,7 @@
       ansible.builtin.copy:
         content: "{{ smallstep_encryption_password }}"
         dest: /var/lib/step/.password
+        owner: step
         mode: 0600
       when: encryption_password_file['size'] == 0
 
@@ -140,12 +166,13 @@
       ansible.builtin.copy:
         content: "{{ smallstep_provisioner_password }}"
         dest: /tmp/provisioner_password
+        owner: step
         mode: 0600
       when: provisioner_password_file['size'] == 0
 
     ### Initialize CA
     - name: Initialize CA
-      ansible.builtin.command: step ca init --name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}
+      ansible.builtin.command: "step ca init {{ smallstep_ca_init_args }}"
       become_user: step
       become: true
       args:
@@ -157,6 +184,7 @@
         name: step-ca
         state: started
         enabled: true
+      when: not is_container | bool
     - name: Debug | message
       ansible.builtin.debug:
         msg: "Provisioner password is stored in /tmp/provisioner_password. Please, move its contents to a password vault, and remove the file."
