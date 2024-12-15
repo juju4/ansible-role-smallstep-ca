@@ -66,6 +66,7 @@
     owner: root
     group: root
     mode: 0775
+  become: true
   notify: Restart ca service
 
 - name: Copy certificates README
