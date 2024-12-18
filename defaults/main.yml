@@ -1,4 +1,8 @@
 ---
-smallstep_ca_version: 0.18.0
-smallstep_cli_version: 0.18.0
+smallstep_ca_version: 0.28.1
+smallstep_cli_version: 0.28.2
 smallstep_arch: amd64
+smallstep_nolog: true
+smallstep_ca_init_args: "--name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}"
+
+is_container: false

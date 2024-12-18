@@ -1,6 +1,6 @@
 ---
-- hosts: "{{ target }}"
+- name: Main play
+  hosts: all
   become: true
-  strategy: free
   roles:
-    - imntreal.smallstep-ca
+    - imntreal.smallstep_ca
