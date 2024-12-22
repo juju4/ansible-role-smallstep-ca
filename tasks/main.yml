@@ -16,14 +16,14 @@
   ansible.builtin.get_url:
     url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-ca.tar.gz
-    mode: 0664
+    mode: '0664'
     force: true
 
 - name: Download step-cli
   ansible.builtin.get_url:
     url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_cli_version }}/step_linux_{{ smallstep_cli_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-cli.tar.gz
-    mode: 0664
+    mode: "0664"
     force: true
 
 - name: Create temp directory for step-ca_{{ smallstep_ca_version }}
@@ -51,7 +51,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
   loop:
     - /usr/bin
     - /usr/lib/systemd/system
@@ -66,7 +66,7 @@
     remote_src: true
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
   become: true
   notify: Restart ca service
 
@@ -75,7 +75,7 @@
     src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}/README.md"
     dest: /usr/share/step-ca/doc/README.md
     remote_src: true
-    mode: 0664
+    mode: "0664"
   become: true
 
 - name: Install systemd unit
@@ -84,7 +84,7 @@
     dest: /usr/lib/systemd/system/step-ca.service
     owner: root
     group: root
-    mode: 0664
+    mode: "0664"
   become: true
   notify:
     - Reload systemd
@@ -97,14 +97,14 @@
     remote_src: true
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
 
 - name: Copy cli README
   ansible.builtin.copy:
     src: /tmp/step_{{ smallstep_cli_version }}/README.md
     dest: /usr/share/step-cli/doc/README.md
     remote_src: true
-    mode: 0664
+    mode: "0664"
   become: true
 
 ### Create user, and assign permissions
@@ -156,7 +156,7 @@
         dest: "{{ smallstep_rootpass }}"
         owner: step
         group: step
-        mode: 0600
+        mode: "0600"
       when:
         - not encryption_password_file.stat.exists or encryption_password_file.stat.size == 0
 
@@ -166,7 +166,7 @@
         dest: "{{ smallstep_provisioner_password_file }}"
         owner: step
         group: step
-        mode: 0600
+        mode: "0600"
       when:
         - not provisioner_password_file.stat.exists or provisioner_password_file.stat.size == 0
 
