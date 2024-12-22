@@ -10,6 +10,8 @@ platforms:
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+    groups:
+      - stepca_group
 provisioner:
   name: ansible
   playbooks:
@@ -20,4 +22,4 @@ provisioner:
 scenario:
   name: default
 verifier:
-  name: testinfra
+  name: ansible

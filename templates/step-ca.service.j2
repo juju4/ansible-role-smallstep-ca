@@ -1,0 +1,94 @@
+{{ ansible_managed | comment }}
+
+# /etc/systemd/system/step-ca.service
+# Existing exposure level: 9.2 -> 2.0
+# https://github.com/smallstep/certificates/blob/master/systemd/step-ca.service
+# https://4sysops.com/archives/step-ca-running-your-own-certificate-authority-with-acme-support/
+
+[Unit]
+Description=Smallstep CA step-ca service
+Documentation=man:step-ca(8)
+Documentation=https://smallstep.com/docs/step-ca
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+After=network.target
+StartLimitIntervalSec=30
+StartLimitBurst=3
+ConditionFileNotEmpty={{ smallstep_rootdir }}/config/ca.json
+ConditionFileNotEmpty={{ smallstep_rootpass }}
+
+[Service]
+Type=simple
+User=step
+Group=step
+Environment=STEPPATH=/etc/step-ca
+WorkingDirectory={{ smallstep_rootdir }}
+ExecStart=/usr/bin/step-ca {{ smallstep_rootdir }}/config/ca.json --password-file {{ smallstep_rootpass }}
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StartLimitInterval=30
+StartLimitBurst=3
+
+# Reduce Attack Surface
+NoNewPrivileges=yes
+PrivateTmp=true
+PrivateDevices=yes
+ProtectHome=yes
+ProtectSystem=full
+
+PrivateDevices=true
+DeviceAllow=
+
+# PrivateUsers=yes
+
+UMask=077
+
+# InaccessiblePaths=/proc
+ReadWriteDirectories={{ smallstep_rootdir }}/db
+
+ProtectKernelTunables=true
+ProtectKernelModules=true
+# ProtectHostname=yes
+ProtectClock=true
+
+ProtectControlGroups=true
+LockPersonality=true
+RemoveIPC=true
+
+IPAccounting=yes
+# Service should not be exposed directly to Internet
+IPAddressAllow=localhost link-local multicast 10.0.0.0/8 192.168.0.0/16
+
+RestrictRealtime=true
+RestrictNamespaces=~user mnt
+ProtectKernelLogs=true
+LockPersonality=true
+RestrictSUIDSGID=true
+MemoryDenyWriteExecute=true
+
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+{% if not (ansible_virtualization_type is defined and
+          ansible_virtualization_type == "docker"
+        )
+%}
+
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+SecureBits=keep-caps
+
+SystemCallFilter=@system-service
+SystemCallFilter=~@debug @cpu-emulation @module @mount @obsolete @privileged @chown @keyring @raw-io @reboot
+# When system call is disallowed, return error code instead of killing process
+SystemCallErrorNumber=EPERM
+{% endif %}
+SystemCallArchitectures=native
+
+CPUWeight={{ smallstep_cgroups_cpushares | default('1024') }}
+CPUQuota={{ smallstep_cgroups_cpuquota | default('80%') }}
+MemoryMax={{ smallstep_cgroups_memorylimit | default('2G') }}
+IOWeight={{ smallstep_cgroups_ioweight | default('100') }}
+
+[Install]
+WantedBy=multi-user.target

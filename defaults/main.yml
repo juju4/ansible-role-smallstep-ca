@@ -2,7 +2,15 @@
 smallstep_ca_version: 0.28.1
 smallstep_cli_version: 0.28.2
 smallstep_arch: amd64
+# This seems by default anyway
+# when enabled, "client GET https://certs.internal:8443/admin/admins failed: Forbidden"
+smallstep_acme_enable: false
 smallstep_nolog: true
-smallstep_ca_init_args: "--name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:8443 --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file=/tmp/provisioner_password --password-file=/var/lib/step/.password --with-ca-url=https://{{ ansible_fqdn }}"
+smallstep_listen_host: 127.0.0.1
+smallstep_listen_port: 8443
+smallstep_rootdir: /var/lib/step/.step
+smallstep_rootpass: /var/lib/step/.password
+smallstep_provisioner_password_file: /tmp/provisioner_password
+smallstep_ca_init_args: "--name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:{{ smallstep_listen_port }} --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file={{ smallstep_provisioner_password_file }} --password-file={{ smallstep_rootpass }} --with-ca-url=https://{{ ansible_fqdn }}:{{ smallstep_listen_port }}"
 
 is_container: false

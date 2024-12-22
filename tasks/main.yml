@@ -79,8 +79,8 @@
   become: true
 
 - name: Install systemd unit
-  ansible.builtin.copy:
-    src: step-ca.service
+  ansible.builtin.template:
+    src: step-ca.service.j2
     dest: /usr/lib/systemd/system/step-ca.service
     owner: root
     group: root
@@ -118,11 +118,12 @@
     group: step
     home: /var/lib/step
     create_home: true
+    system: yes
 
 ### Check for, and create config when needed
 - name: Check for CA config
   ansible.builtin.stat:
-    path: /var/lib/step/.step/config/ca.json
+    path: "{{ smallstep_rootdir }}/config.ca.json"
   register: ca_config
 
 - name: Create CA
@@ -139,37 +140,35 @@
         smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
       no_log: "{{ smallstep_nolog | bool }}"
 
-    - name: Create encryption password file
-      ansible.builtin.file:
-        path: /var/lib/step/.password
-        state: touch
-        owner: step
-        group: step
-        mode: 0640
+    - name: Get encryption password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_rootpass }}"
       register: encryption_password_file
 
-    - name: Create provisioner password file
-      ansible.builtin.file:
-        path: /tmp/provisioner_password
-        state: touch
-        mode: 0600
+    - name: Get provisioner password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_provisioner_password_file }}"
       register: provisioner_password_file
 
     - name: Write encryption password to file
       ansible.builtin.copy:
         content: "{{ smallstep_encryption_password }}"
-        dest: /var/lib/step/.password
+        dest: "{{ smallstep_rootpass }}"
         owner: step
+        group: step
         mode: 0600
-      when: encryption_password_file['size'] == 0
+      when:
+        - not encryption_password_file.stat.exists or encryption_password_file.stat.size == 0
 
     - name: Write provisioner password to file
       ansible.builtin.copy:
         content: "{{ smallstep_provisioner_password }}"
-        dest: /tmp/provisioner_password
+        dest: "{{ smallstep_provisioner_password_file }}"
         owner: step
+        group: step
         mode: 0600
-      when: provisioner_password_file['size'] == 0
+      when:
+        - not provisioner_password_file.stat.exists or provisioner_password_file.stat.size == 0
 
     ### Initialize CA
     - name: Initialize CA
@@ -178,7 +177,7 @@
       become: true
       args:
         chdir: /var/lib/step
-        creates: /var/lib/step/.step/certs/root_ca.crt
+        creates: "{{ smallstep_rootdir }}/certs/root_ca.crt"
 
     - name: Start/enable service
       ansible.builtin.service:
@@ -186,6 +185,27 @@
         state: started
         enabled: true
       when: not is_container | bool
+
+    - name: Check if step-ca port is listening
+      ansible.builtin.wait_for:
+        host: "{{ smallstep_listen_host }}"
+        port: "{{ smallstep_listen_port }}"
+      when:
+        - not is_container | bool
+        - false
+
+    - name: Enable ACME provisioner
+      ansible.builtin.command: "step ca provisioner add acme --type ACME"
+      become_user: step
+      become: true
+      args:
+        chdir: /var/lib/step
+      register: add_acme
+      changed_when:
+        - add_acme.rc != 0
+        - "'provisioner with name acme already exists' not in add_acme.stderr"
+      when: smallstep_acme_enable | bool
+
     - name: Debug | message
       ansible.builtin.debug:
-        msg: "Provisioner password is stored in /tmp/provisioner_password. Please, move its contents to a password vault, and remove the file."
+        msg: "Provisioner password is stored in {{ smallstep_provisioner_password_file }}. Please, move its contents to a password vault, and remove the file."
