@@ -51,6 +51,15 @@ FAQ
 * Certificates auto-renewal: https://smallstep.com/docs/step-ca/renewal/
 * Monitoring
   * [Telemetry endpoint #790](https://github.com/smallstep/certificates/issues/790), [Implementation of the Prometheus endpoint #1669](https://github.com/smallstep/certificates/pull/1669)
+* Lost provisioner password file? you need to remove and create again the provisioner. For example:
+```
+step ca provisioner list
+step ca provisioner remove smallstep-provisioner@
+```
+and rerun role. you may need to manually:
+  * update ca-url and address in /var/lib/step/.step/config/ if you have a reverse-proxy.
+  * add encrypted key to ca.json (see below).
+* "encrypted key with kid xyz was not found" in `journalctl -u step-ca -l --no-pager --since today`. need to reformat and update key in ca.json as per https://github.com/smallstep/certificates/discussions/1864
 
 License
 -------
