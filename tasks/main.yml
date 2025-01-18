@@ -209,3 +209,6 @@
     - name: Debug | message
       ansible.builtin.debug:
         msg: "Provisioner password is stored in {{ smallstep_provisioner_password_file }}. Please, move its contents to a password vault, and remove the file."
+
+- name: Import yubikey
+  ansible.builtin.import_tasks: yubikey.yml
