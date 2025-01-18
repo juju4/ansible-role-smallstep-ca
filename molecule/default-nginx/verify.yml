@@ -1,0 +1,106 @@
+---
+
+- name: Verify step-ca setup
+  hosts: stepca_group
+  vars:
+    stepca_home: /var/lib/step
+    stepca_bin: /usr/bin/step
+    config: "{{ stepca_home }}/.step/config/ca.json"
+    ports:
+      - { h: localhost, p: 8443 }
+      - { h: localhost, p: 443 }
+    url: https://localhost
+    is_container: false
+  pre_tasks:
+    - name: Debug | var ansible_virtualization_type
+      ansible.builtin.debug:
+        var: ansible_virtualization_type
+    - name: Set fact is_container
+      ansible.builtin.set_fact:
+        is_container: true
+      when: >
+        (ansible_virtualization_type is defined and
+          (ansible_virtualization_type == "docker"
+           or ansible_virtualization_type == "containerd"
+           or ansible_virtualization_type == "container"
+          )
+        )
+    - name: Debian | Set fact
+      ansible.builtin.set_fact:
+        sf_py_mode: '0644'
+      when: ansible_distribution == 'Debian'
+  tasks:
+
+    - name: Check stepca command
+      ansible.builtin.stat:
+        path: "{{ stepca_bin }}"
+      register: bin1
+    - name: Validate stepca command is present
+      ansible.builtin.assert:
+        that: bin1.stat.exists and bin1.stat.size != 0
+
+    - name: Check stepca config file
+      ansible.builtin.stat:
+        path: "{{ config }}"
+      register: cfg1
+    - name: Validate stepca config file is present
+      ansible.builtin.assert:
+        that: cfg1.stat.exists and cfg1.stat.size != 0
+
+    - name: Ensure stepca process is running
+      ansible.builtin.command: pgrep -u step step-ca
+      register: ps1
+      changed_when: false
+      failed_when: false
+    - name: Validate ps output
+      ansible.builtin.assert:
+        that: ps1.stdout
+      when:
+        - not is_container|bool
+
+    - name: Ensure ports are listening
+      ansible.builtin.wait_for:
+        host: "{{ item.h }}"
+        port: "{{ item.p }}"
+        timeout: 10
+      with_items: "{{ ports }}"
+      when:
+        - not is_container|bool
+
+    - name: Fetch localhost endpoint
+      ansible.builtin.uri:
+        url: "{{ url }}"
+        validate_certs: no
+        status_code: 404
+        return_content: yes
+      register: web
+      failed_when: false
+    - name: Fetch localhost endpoint roots.pem
+      ansible.builtin.uri:
+        url: "{{ url }}/roots.pem"
+        validate_certs: no
+        status_code: 200
+        return_content: yes
+      register: web2
+      failed_when: false
+    - name: Validate localhost endpoint roots.pem
+      ansible.builtin.assert:
+        that: >
+          "'-----BEGIN CERTIFICATE-----' in web2.content"
+      when:
+        - not is_container|bool
+
+    - name: Check no error/warning in log
+      ansible.builtin.shell: |
+        set -o pipefail
+        journalctl -u step-ca -l --no-pager --since today | grep -iE 'error|warning'
+      args:
+        executable: /bin/bash
+      register: log2
+      changed_when: false
+      failed_when: false
+    - name: Validate log2
+      ansible.builtin.assert:
+        that: log2.rc != 0
+      when:
+        - not is_container|bool
