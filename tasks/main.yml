@@ -200,9 +200,12 @@
   become_user: step
   register: prov_list
   changed_when: false
+  when:
+    - not is_container | bool
 
 - name: JWK
   when:
+    - not is_container | bool
     - "'\"type\": \"JWK\",' not in prov_list.stdout"
   block:
     - name: Generate provisioner password
@@ -278,6 +281,7 @@
 
 - name: ACME
   when:
+    - not is_container | bool
     - "'\"type\": \"ACME\",' not in prov_list.stdout"
     - smallstep_acme_enable | bool
   block:
