@@ -294,3 +294,6 @@
 
 - name: Import yubikey
   ansible.builtin.import_tasks: yubikey.yml
+
+- name: Import backup
+  ansible.builtin.import_tasks: backup.yml

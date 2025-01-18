@@ -1,0 +1,47 @@
+---
+
+- name: Retrieve provisioner key
+  when:
+    - smallstep_backup_ca_crt | bool
+  block:
+    - name: Retrieve ca on orchestrator
+      ansible.builtin.fetch:
+        src: "{{ smallstep_rootdir }}/certs/root_ca.crt"
+        dest: files
+        mode: '0400'
+
+- name: Debug | message
+  ansible.builtin.debug:
+    msg: "Provisioner password is stored in {{ smallstep_provisioner_password_file }}. Please, move its contents to a password vault, and remove the file."
+  when: not smallstep_backup_provisioner_password | bool
+
+- name: Retrieve provisioner key
+  when:
+    - smallstep_backup_provisioner_password | bool
+  block:
+    - name: Retrieve provisioner password on orchestrator
+      ansible.builtin.fetch:
+        src: "{{ smallstep_provisioner_password_file }}"
+        dest: files
+        mode: '0400'
+    - name: Debug | message
+      ansible.builtin.debug:
+        msg: "Provisioner password has been retrieved on orchestrator."
+
+- name: Debug | message
+  ansible.builtin.debug:
+    msg: "Encryption password is stored in {{ smallstep_rootpass }}. Please, move its contents to a password vault, and remove the file."
+  when: not smallstep_backup_encryption_password | bool
+
+- name: Retrieve encryption key
+  when:
+    - smallstep_backup_encryption_password | bool
+  block:
+    - name: Retrieve encryption password on orchestrator
+      ansible.builtin.fetch:
+        src: "{{ smallstep_rootpass }}"
+        dest: files
+        mode: '0400'
+    - name: Debug | message
+      ansible.builtin.debug:
+        msg: "Encryption password has been retrieved on orchestrator."

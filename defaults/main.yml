@@ -19,4 +19,9 @@ smallstep_yubikey_import: false
 smallstep_yubikey_import_slot1: 9a
 smallstep_yubikey_import_slot2: 9c
 
+# retrieve files to orchestrator?
+smallstep_backup_ca_crt: true
+smallstep_backup_provisioner_password: true
+smallstep_backup_encryption_password: true
+
 is_container: false
