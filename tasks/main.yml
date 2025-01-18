@@ -194,21 +194,103 @@
         - not is_container | bool
         - false
 
+- name: Get current provisioners
+  ansible.builtin.command: "step ca provisioner list"
+  become: true
+  become_user: step
+  register: prov_list
+  changed_when: false
+
+- name: JWK
+  when:
+    - "'\"type\": \"JWK\",' not in prov_list.stdout"
+  block:
+    - name: Generate provisioner password
+      ansible.builtin.set_fact:
+        smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
+
+    - name: Get provisioner password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_provisioner_password_file }}"
+      register: provisioner_password_file
+
+    - name: Write provisioner password to file
+      ansible.builtin.copy:
+        content: "{{ smallstep_provisioner_password }}"
+        dest: "{{ smallstep_provisioner_password_file }}"
+        owner: step
+        group: step
+        mode: "0600"
+      when:
+        - not provisioner_password_file.stat.exists or provisioner_password_file.stat.size == 0
+
+    - name: Get jwk file stat
+      ansible.builtin.stat:
+        path: "/var/lib/step/jwk.pub.json"
+      register: jwk_file
+
+    - name: Create Json Web Key
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "step crypto jwk create jwk.pub.json jwk.json --password-file={{ smallstep_provisioner_password_file }}"
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+      when:
+        - not jwk_file.stat.exists
+
+    - name: Enable JWK provisioner
+      ansible.builtin.command: "step ca provisioner add smallstep-provisioner@ --type JWK --public-key /var/lib/step/jwk.pub.json"
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+      register: add_jwk
+      changed_when:
+        - add_jwk.rc == 0
+        - "'Success! Your `step-ca` config has been updated.' in add_jwk.stderr"
+
+    - name: Get encryptedKey in jose format
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat jwk.json | step crypto jose format
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+        executable: /bin/bash
+      register: jwk_jose
+      changed_when: false
+
+    # FIXME! this only get one provisioner as output where need full output of existing ca.json
+    # must be done manually for now
+    - name: Add JWK encryptedKey to ca.json
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat {{ smallstep_rootdir }}/config/ca.json | jq '.authority.provisioners | map_values(select(.type=="JWK")) | first + { "encryptedKey": "{{ jwk_jose.stdout }}" }'
+      args:
+        chdir: /var/lib/step
+        executable: /bin/bash
+      changed_when: false
+
+- name: ACME
+  when:
+    - "'\"type\": \"ACME\",' not in prov_list.stdout"
+    - smallstep_acme_enable | bool
+  block:
     - name: Enable ACME provisioner
       ansible.builtin.command: "step ca provisioner add acme --type ACME"
-      become_user: step
       become: true
+      become_user: step
       args:
         chdir: /var/lib/step
       register: add_acme
       changed_when:
         - add_acme.rc != 0
         - "'provisioner with name acme already exists' not in add_acme.stderr"
-      when: smallstep_acme_enable | bool
-
-    - name: Debug | message
-      ansible.builtin.debug:
-        msg: "Provisioner password is stored in {{ smallstep_provisioner_password_file }}. Please, move its contents to a password vault, and remove the file."
 
 - name: Import yubikey
   ansible.builtin.import_tasks: yubikey.yml
