@@ -1,6 +1,8 @@
 {{ ansible_managed | comment }}
 
 # /etc/nginx/site-enabled/stepca
+# https://smallstep.com/docs/step-ca/certificate-authority-server-production/#proxying-step-ca-traffic
+# This configuration (reverse proxy L7) requires to disable mutual TLS authentication for `step ca renew`
 
 server {
     listen 443 ssl http2;
@@ -9,19 +11,22 @@ server {
     include /etc/nginx/harden-nginx-https;
 {% if hardenwebserver_cert is defined and hardenwebserver_cert == 'selfsigned' %}
     ssl_certificate {{ hardenwebserver_ssl_cert | default( ssl_dir + "/" + ansible_fqdn + ".crt") }};
+    ssl_certificate_key {{ hardenwebserver_ssl_key | default( ssl_privatedir + "/" + ansible_fqdn + ".key") }};
 {% else %}
     ssl_certificate {{ hardenwebserver_ssl_cert | default(ssl_fullchain) }};
+    ssl_certificate_key {{ hardenwebserver_ssl_key | default(ssl_privkey) }};
 {% endif %}
-    ssl_certificate_key {{ hardenwebserver_ssl_key | default( ssl_privatedir + "/" + ansible_fqdn + ".key") }};
 
     server_name {{ ansible_fqdn }};
 
     access_log /var/log/nginx/stepca.access.log;
+    access_log /var/log/nginx/stepca.access_json.log combined_json;
     error_log /var/log/nginx/stepca.error.log;
 
     server_tokens off;
     etag off;
 
+    # if prod, locations: /root/*, /renew, /1.0/sign, /provisioners
     location / {
         add_header X-Content-Type-Options nosniff;
         add_header X-Frame-Options SAMEORIGIN;
@@ -35,6 +40,8 @@ server {
         # Adapt this to your configuration (port, subdirectory (see below))
         proxy_pass  https://localhost:{{ smallstep_listen_port }};
         proxy_pass_request_headers on;
+        # proxy_ssl_trusted_certificate /usr/share/ca-certificates/stepca-internal-roots.pem;
+        # proxy_ssl_verify              off;
 
         proxy_http_version 1.1;
         proxy_set_header Host $host;
