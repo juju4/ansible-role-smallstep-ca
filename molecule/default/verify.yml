@@ -2,6 +2,7 @@
 
 - name: Verify step-ca setup
   hosts: stepca_group
+  become: yes
   vars:
     stepca_home: /var/lib/step
     stepca_bin: /usr/bin/step
