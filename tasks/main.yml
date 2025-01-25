@@ -195,7 +195,7 @@
         - false
 
 - name: Get current provisioners
-  ansible.builtin.command: "step ca provisioner list"
+  ansible.builtin.command: "step ca provisioner list {{ smallstep_provisioner_args }}"
   become: true
   become_user: step
   register: prov_list

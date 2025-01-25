@@ -12,6 +12,8 @@ smallstep_rootdir: /var/lib/step/.step
 smallstep_rootpass: /var/lib/step/.password
 smallstep_provisioner_password_file: /tmp/provisioner_password
 smallstep_ca_init_args: "--name=Smallstep --dns={{ ansible_fqdn }},localhost --address=127.0.0.1:{{ smallstep_listen_port }} --provisioner=smallstep@{{ ansible_domain }} --provisioner-password-file={{ smallstep_provisioner_password_file }} --password-file={{ smallstep_rootpass }} --with-ca-url=https://{{ ansible_fqdn }}:{{ smallstep_listen_port }}"
+smallstep_provisioner_args: ''
+# smallstep_provisioner_args: '--ca-url=https://{{ ansible_fqdn }}:{{ smallstep_listen_port }}'
 
 # root/intermediate ca on yubikey?
 smallstep_yubikey_packages: false
