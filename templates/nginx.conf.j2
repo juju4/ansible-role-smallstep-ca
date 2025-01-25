@@ -20,7 +20,9 @@ server {
     server_name {{ ansible_fqdn }};
 
     access_log /var/log/nginx/stepca.access.log;
+{% if hardenwebserver_nginx_with_log_json is defined and hardenwebserver_nginx_with_log_json | bool %}
     access_log /var/log/nginx/stepca.access_json.log combined_json;
+{% endif %}
     error_log /var/log/nginx/stepca.error.log;
 
     server_tokens off;
