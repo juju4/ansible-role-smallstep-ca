@@ -16,14 +16,14 @@
   ansible.builtin.get_url:
     url: https://github.com/smallstep/certificates/releases/download/v{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-ca.tar.gz
-    mode: 0664
+    mode: '0664'
     force: true
 
 - name: Download step-cli
   ansible.builtin.get_url:
     url: https://github.com/smallstep/cli/releases/download/v{{ smallstep_cli_version }}/step_linux_{{ smallstep_cli_version }}_{{ smallstep_arch }}.tar.gz
     dest: /tmp/step-cli.tar.gz
-    mode: 0664
+    mode: "0664"
     force: true
 
 - name: Create temp directory for step-ca_{{ smallstep_ca_version }}
@@ -51,7 +51,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
   loop:
     - /usr/bin
     - /usr/lib/systemd/system
@@ -66,7 +66,7 @@
     remote_src: true
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
   become: true
   notify: Restart ca service
 
@@ -75,16 +75,16 @@
     src: "/tmp/step-ca_{{ smallstep_ca_version }}/step-ca_linux_{{ smallstep_arch }}/README.md"
     dest: /usr/share/step-ca/doc/README.md
     remote_src: true
-    mode: 0664
+    mode: "0664"
   become: true
 
 - name: Install systemd unit
-  ansible.builtin.copy:
-    src: step-ca.service
+  ansible.builtin.template:
+    src: step-ca.service.j2
     dest: /usr/lib/systemd/system/step-ca.service
     owner: root
     group: root
-    mode: 0664
+    mode: "0664"
   become: true
   notify:
     - Reload systemd
@@ -97,14 +97,14 @@
     remote_src: true
     owner: root
     group: root
-    mode: 0775
+    mode: "0775"
 
 - name: Copy cli README
   ansible.builtin.copy:
     src: /tmp/step_{{ smallstep_cli_version }}/README.md
     dest: /usr/share/step-cli/doc/README.md
     remote_src: true
-    mode: 0664
+    mode: "0664"
   become: true
 
 ### Create user, and assign permissions
@@ -118,11 +118,12 @@
     group: step
     home: /var/lib/step
     create_home: true
+    system: yes
 
 ### Check for, and create config when needed
 - name: Check for CA config
   ansible.builtin.stat:
-    path: /var/lib/step/.step/config/ca.json
+    path: "{{ smallstep_rootdir }}/config.ca.json"
   register: ca_config
 
 - name: Create CA
@@ -139,37 +140,35 @@
         smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
       no_log: "{{ smallstep_nolog | bool }}"
 
-    - name: Create encryption password file
-      ansible.builtin.file:
-        path: /var/lib/step/.password
-        state: touch
-        owner: step
-        group: step
-        mode: 0640
+    - name: Get encryption password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_rootpass }}"
       register: encryption_password_file
 
-    - name: Create provisioner password file
-      ansible.builtin.file:
-        path: /tmp/provisioner_password
-        state: touch
-        mode: 0600
+    - name: Get provisioner password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_provisioner_password_file }}"
       register: provisioner_password_file
 
     - name: Write encryption password to file
       ansible.builtin.copy:
         content: "{{ smallstep_encryption_password }}"
-        dest: /var/lib/step/.password
+        dest: "{{ smallstep_rootpass }}"
         owner: step
-        mode: 0600
-      when: encryption_password_file['size'] == 0
+        group: step
+        mode: "0600"
+      when:
+        - not encryption_password_file.stat.exists or encryption_password_file.stat.size == 0
 
     - name: Write provisioner password to file
       ansible.builtin.copy:
         content: "{{ smallstep_provisioner_password }}"
-        dest: /tmp/provisioner_password
+        dest: "{{ smallstep_provisioner_password_file }}"
         owner: step
-        mode: 0600
-      when: provisioner_password_file['size'] == 0
+        group: step
+        mode: "0600"
+      when:
+        - not provisioner_password_file.stat.exists or provisioner_password_file.stat.size == 0
 
     ### Initialize CA
     - name: Initialize CA
@@ -178,7 +177,7 @@
       become: true
       args:
         chdir: /var/lib/step
-        creates: /var/lib/step/.step/certs/root_ca.crt
+        creates: "{{ smallstep_rootdir }}/certs/root_ca.crt"
 
     - name: Start/enable service
       ansible.builtin.service:
@@ -186,6 +185,119 @@
         state: started
         enabled: true
       when: not is_container | bool
-    - name: Debug | message
-      ansible.builtin.debug:
-        msg: "Provisioner password is stored in /tmp/provisioner_password. Please, move its contents to a password vault, and remove the file."
+
+    - name: Check if step-ca port is listening
+      ansible.builtin.wait_for:
+        host: "{{ smallstep_listen_host }}"
+        port: "{{ smallstep_listen_port }}"
+      when:
+        - not is_container | bool
+        - false
+
+- name: Get current provisioners
+  ansible.builtin.command: "step ca provisioner list {{ smallstep_provisioner_args }}"
+  become: true
+  become_user: step
+  register: prov_list
+  changed_when: false
+  when:
+    - not is_container | bool
+
+- name: JWK
+  when:
+    - not is_container | bool
+    - "'\"type\": \"JWK\",' not in prov_list.stdout"
+  block:
+    - name: Generate provisioner password
+      ansible.builtin.set_fact:
+        smallstep_provisioner_password: "{{ lookup('password', '/dev/null') }}"
+      no_log: "{{ smallstep_nolog | bool }}"
+
+    - name: Get provisioner password file stat
+      ansible.builtin.stat:
+        path: "{{ smallstep_provisioner_password_file }}"
+      register: provisioner_password_file
+
+    - name: Write provisioner password to file
+      ansible.builtin.copy:
+        content: "{{ smallstep_provisioner_password }}"
+        dest: "{{ smallstep_provisioner_password_file }}"
+        owner: step
+        group: step
+        mode: "0600"
+      when:
+        - not provisioner_password_file.stat.exists or provisioner_password_file.stat.size == 0
+
+    - name: Get jwk file stat
+      ansible.builtin.stat:
+        path: "/var/lib/step/jwk.pub.json"
+      register: jwk_file
+
+    - name: Create Json Web Key
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "step crypto jwk create jwk.pub.json jwk.json --password-file={{ smallstep_provisioner_password_file }}"
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+      when:
+        - not jwk_file.stat.exists
+
+    - name: Enable JWK provisioner
+      ansible.builtin.command: "step ca provisioner add smallstep-provisioner@ --type JWK --public-key /var/lib/step/jwk.pub.json"
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+      register: add_jwk
+      changed_when:
+        - add_jwk.rc == 0
+        - "'Success! Your `step-ca` config has been updated.' in add_jwk.stderr"
+
+    - name: Get encryptedKey in jose format
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat jwk.json | step crypto jose format
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+        executable: /bin/bash
+      register: jwk_jose
+      changed_when: false
+
+    # FIXME! this only get one provisioner as output where need full output of existing ca.json
+    # must be done manually for now
+    - name: Add JWK encryptedKey to ca.json
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat {{ smallstep_rootdir }}/config/ca.json | jq '.authority.provisioners | map_values(select(.type=="JWK")) | first + { "encryptedKey": "{{ jwk_jose.stdout }}" }'
+      args:
+        chdir: /var/lib/step
+        executable: /bin/bash
+      changed_when: false
+
+- name: ACME
+  when:
+    - not is_container | bool
+    - "'\"type\": \"ACME\",' not in prov_list.stdout"
+    - smallstep_acme_enable | bool
+  block:
+    - name: Enable ACME provisioner
+      ansible.builtin.command: "step ca provisioner add acme --type ACME"
+      become: true
+      become_user: step
+      args:
+        chdir: /var/lib/step
+      register: add_acme
+      changed_when:
+        - add_acme.rc != 0
+        - "'provisioner with name acme already exists' not in add_acme.stderr"
+
+- name: Import yubikey
+  ansible.builtin.import_tasks: yubikey.yml
+
+- name: Import backup
+  ansible.builtin.import_tasks: backup.yml

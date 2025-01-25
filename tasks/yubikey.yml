@@ -1,0 +1,47 @@
+---
+# https://smallstep.com/blog/build-a-tiny-ca-with-raspberry-pi-yubikey/
+
+- name: Yubikey toolset
+  when:
+    - smallstep_yubikey_packages | bool
+  block:
+    - name: Install yubikey-related packages
+      ansible.builtin.package:
+        name:
+          - pcscd
+          - yubikey-manager
+        state: present
+
+    - name: Ensure pcscd service is started/enabled
+      ansible.builtin.service:
+        name: pcscd
+        state: started
+        enabled: yes
+
+    - name: Check Yubikey is readable
+      ansible.builtin.command:
+        cmd: ykman info
+      changed_when: false
+
+- name: Import certificates and key on Yubikey
+  when:
+    - smallstep_yubikey_import | bool
+  block:
+    - name: Import root ca certificate on yubikey
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "ykman piv certificates import {{ smallstep_yubikey_import_slot1 }} {{ smallstep_rootdir }}/certs/root_ca.crt --password={{ smallstep_encryption_password }}"
+    - name: Import root ca key on yubikey
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "ykman piv keys import {{ smallstep_yubikey_import_slot1 }} {{ smallstep_rootdir }}/secrets/root_ca.key --password={{ smallstep_encryption_password }}"
+
+    - name: Import intermediate ca certificate on yubikey
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "ykman piv certificates import {{ smallstep_yubikey_import_slot2 }} {{ smallstep_rootdir }}/certs/intermediate_ca.crt --password={{ smallstep_encryption_password }}"
+    - name: Import intermediate ca key on yubikey
+      ansible.builtin.command:  # noqa no-changed-when
+        cmd: "ykman piv keys import {{ smallstep_yubikey_import_slot2 }} {{ smallstep_rootdir }}/secrets/intermediate_ca.key --password={{ smallstep_encryption_password }}"
+
+    - name: Check Yubikey after import
+      ansible.builtin.command:
+        cmd: ykman info
+      changed_when: false

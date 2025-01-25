@@ -1,0 +1,34 @@
+---
+- name: Converge
+  hosts: all
+  remote_user: root
+  vars:
+    cache_instances:
+      - 'prd'
+
+    epic_environments:
+      - {Instance: 'PRD', Environment: 'PRD'}
+
+    hardenwebserver_disable_http: true
+    hardenwebserver_https_template: ../../templates/nginx.conf.j2
+    hardenwebserver_header_csp: "default-src 'self'; script-src 'self' 'unsafe-inline' 'report-sample'; connect-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:;base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests; report-uri /csp/report.php;"
+    hardenwebserver_systemd_dir_acl:
+      - { p: "/etc/ssl/private", perm: rx, m: '0710' }
+      - { p: "/var/log/nginx", perm: rwx, m: '0755' }
+    hardenwebserver_systemd_files_acl:
+      - { p: "/etc/ssl/private/dhparam4.pem", perm: r }
+      - { p: "/etc/ssl/private/{{ ansible_fqdn }}.key", perm: r }
+    cert_san:
+      - "DNS:certs.internal"
+      - "DNS:certs"
+      - "DNS:{{ ansible_hostname }}"
+      - "DNS:{{ ansible_fqdn }}"
+      - "IP:{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+    cert_use_cn_san: false
+    stepca_args: '--provisioner smallstep-provisioner@ --ca-url=certs.internal:8443 --root=/var/lib/step/.step/certs/root_ca.crt --san=DNS:certs.internal --san=DNS:{{ ansible_hostname }} --san=IP:{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}'
+  pre_tasks:
+
+  roles:
+    - role: imntreal.smallstep_ca
+    - role: juju4.harden_nginx
+    # after nginx is configured, you can change stepca listening to localhost only
