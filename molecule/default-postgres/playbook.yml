@@ -20,6 +20,11 @@
     smallstep_db_datasource: "postgresql://user:password@127.0.0.1:5432/"
     smallstep_db_name: 'smallstepdb'
   pre_tasks:
+    - name: Debian | Update cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
 
   roles:
     - role: geerlingguy.postgresql
