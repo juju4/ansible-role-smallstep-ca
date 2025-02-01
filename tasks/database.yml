@@ -1,0 +1,38 @@
+---
+
+- name: Recover existing ca.json
+  ansible.builtin.slurp:
+    path: "{{ smallstep_rootdir }}/config/ca.json"
+  register: ca_json
+
+- name: Set fact
+  ansible.builtin.set_fact:
+    ca_json2: "{{ ca_json | b64decode }}"
+
+- name: Update fact with new database settings
+  ansible.utils.update_fact:
+    updates:
+      - path: ca_json2.db.type
+        value: "{{ smallstep_db_type }}"
+      - path: ca_json2.db.dataSource
+        value: "{{ smallstep_db_datasource }}"
+      - path: ca_json2.db.database
+        value: "{{ smallstep_db_name }}"
+  register: new_ca_json
+
+- name: Check new ca.json
+  ansible.builtin.debug:
+    var: new_ca_json
+    verbosity: 1
+
+- name: Save to ca.json
+  ansible.builtin.copy:
+    content: "{{ new_ca_json }}"
+    dest: "{{ smallstep_rootdir }}/config/ca.json"
+    mode: '0644'
+    owner: step
+  notify:
+    - Restart ca service
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

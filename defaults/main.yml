@@ -15,6 +15,12 @@ smallstep_ca_init_args: "--name=Smallstep --dns={{ ansible_fqdn }},localhost --a
 smallstep_provisioner_args: ''
 # smallstep_provisioner_args: '--ca-url=https://{{ ansible_fqdn }}:{{ smallstep_listen_port }}'
 
+# https://smallstep.com/docs/step-ca/configuration/#databases
+smallstep_db_type: badgerv2
+# smallstep_db_type: postgresql
+smallstep_db_datasource: "postgresql://user:password@127.0.0.1:5432/"
+smallstep_db_name: 'smallstepdb'
+
 # root/intermediate ca on yubikey?
 smallstep_yubikey_packages: false
 smallstep_yubikey_import: false

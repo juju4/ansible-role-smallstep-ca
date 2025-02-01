@@ -194,6 +194,11 @@
         - not is_container | bool
         - false
 
+- name: Database
+  ansible.builtin.import_tasks: database.yml
+  when:
+    - smallstep_db_type != 'badgerv2'
+
 - name: Get current provisioners
   ansible.builtin.command: "step ca provisioner list {{ smallstep_provisioner_args }}"
   become: true
