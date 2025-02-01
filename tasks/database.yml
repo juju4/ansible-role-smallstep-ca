@@ -7,7 +7,7 @@
 
 - name: Set fact
   ansible.builtin.set_fact:
-    ca_json2: "{{ ca_json | b64decode }}"
+    ca_json2: "{{ ca_json['content'] | b64decode }}"
 
 - name: Update fact with new database settings
   ansible.utils.update_fact:
