@@ -22,12 +22,12 @@
 
 - name: Check new ca.json
   ansible.builtin.debug:
-    var: new_ca_json
+    var: new_ca_json.ca2_json
     verbosity: 1
 
 - name: Save to ca.json
   ansible.builtin.copy:
-    content: "{{ new_ca_json }}"
+    content: "{{ new_ca_json.ca2_json }}"
     dest: "{{ smallstep_rootdir }}/config/ca.json"
     mode: '0644'
     owner: step
