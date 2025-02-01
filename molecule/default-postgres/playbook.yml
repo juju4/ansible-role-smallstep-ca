@@ -1,0 +1,26 @@
+---
+- name: Converge
+  hosts: all
+  remote_user: root
+  vars:
+    cache_instances:
+      - 'prd'
+
+    epic_environments:
+      - {Instance: 'PRD', Environment: 'PRD'}
+
+    postgresql_databases:
+      - name: smallstepdb
+    postgresql_users: []
+      - name: user
+        password: password
+        db: smallstepdb
+    postgres_users_no_log: false
+    smallstep_db_type: postgresql
+    smallstep_db_datasource: "postgresql://user:password@127.0.0.1:5432/"
+    smallstep_db_name: 'smallstepdb'
+  pre_tasks:
+
+  roles:
+    - role: geerlingguy.postgresql
+    - role: imntreal.smallstep_ca
