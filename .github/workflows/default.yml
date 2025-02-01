@@ -24,18 +24,24 @@ jobs:
         include:
           - molecule_distro: 'rockylinux:9'
             experimental: false
+            suite: default
           - molecule_distro: 'rockylinux:8'
             experimental: false
+            suite: default
           - molecule_distro: 'ubuntu:24.04'
             experimental: false
+            suite: default
           - molecule_distro: 'ubuntu:22.04'
             experimental: false
+            suite: default
           - molecule_distro: 'ubuntu:20.04'
             experimental: false
+            suite: default
     env:
       ANSIBLE_CALLBACKS_ENABLED: profile_tasks
       MOLECULE_NO_LOG: "false"
       ANSIBLE_ROLE: imntreal.smallstep_ca
+      ANSIBLE_SUITE: ${{ matrix.suite }}
 
     steps:
       - uses: actions/checkout@v4
@@ -47,11 +53,13 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
+          set -x
           python -m pip install --upgrade pip
           pip install molecule molecule-plugins docker ansible-lint flake8 testinfra ansible
           # Workaround for https://github.com/docker/docker-py/issues/3113
           pip install "urllib3<2"
-          mkdir -p $HOME/.ansible/roles && ln -s $GITHUB_WORKSPACE/$ANSIBLE_ROLE $HOME/.ansible/roles/
+          mkdir -p $HOME/.ansible/roles && ln -s $GITHUB_WORKSPACE/$ANSIBLE_ROLE $HOME/.ansible/roles/ || true
+          [ -f molecule/${SUITE}/requirements.yml ] && ansible-galaxy install -r molecule/${SUITE}/requirements.yml || true
       - name: Environment
         run: |
           pwd
@@ -59,11 +67,11 @@ jobs:
           find -ls
       - name: Galaxy dependencies
         run: |
-          cd $GITHUB_WORKSPACE/$ANSIBLE_ROLE && ansible-galaxy install --timeout 120 --verbose -r molecule/default/requirements.yml
+          cd $GITHUB_WORKSPACE/$ANSIBLE_ROLE && ansible-galaxy install --timeout 120 --verbose -r molecule/$ANSIBLE_SUITE/requirements.yml
         continue-on-error: true
       - name: run test
         run: |
-          cd $GITHUB_WORKSPACE/$ANSIBLE_ROLE && molecule test
+          cd $GITHUB_WORKSPACE/$ANSIBLE_ROLE && molecule test --scenario-name ${SUITE}
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
