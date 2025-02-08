@@ -1,0 +1,33 @@
+---
+
+- name: Recover existing json file {{ json_file }}
+  ansible.builtin.slurp:
+    path: "{{ json_file }}"
+  register: json
+
+- name: Set fact
+  ansible.builtin.set_fact:
+    json2: "{{ json['content'] | b64decode }}"
+
+- name: Update fact with new database settings
+  ansible.utils.update_fact:
+    updates: "{{ json_changes | default([]) }}"
+  register: new_json
+
+- name: Check new json
+  ansible.builtin.debug:
+    var: new_json.json2
+    verbosity: 1
+
+- name: Save to file
+  ansible.builtin.copy:
+    content: "{{ new_json.json2 }}"
+    dest: "{{ json_file }}"
+    mode: '0644'
+    owner: "{{ json_file_owner }}"
+    backup: "{{ json_backup | default(true) }}"
+  notify:
+    - "{{ json_handler }}"
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
