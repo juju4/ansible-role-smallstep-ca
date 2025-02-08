@@ -40,6 +40,7 @@ echo "** Events"
 journalctl -xeu "${service}" ${journalctl_args} | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1,\2,\3,\4@' | sort | uniq -c | sort -nr
 journalctl -xeu "${service}" ${journalctl_args} | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1,\2,\3,\4@' | sort | uniq -c | sort -nr
 
+if [ -f "${nginx_jsonlog}" ]; then
 echo "** Nginx path"
 jq -r '.uri' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
 echo "** Nginx remote_addr"
@@ -50,5 +51,6 @@ echo "** Nginx http_user_agent"
 jq -r '.http_user_agent' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
 echo "** Nginx failed queries"
 jq -r 'select(.status != "200" and .status != "201") | .uri + " " + .status + " by: " + .remote_addr + " ua: " + .http_user_agent' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
+fi
 
 find {{ smallstep_reporting_dest }} -name 'smallstep-report-*' -mtime +{{ smallstep_logrotate_days|int }} -exec rm {} \; 2>/dev/null
