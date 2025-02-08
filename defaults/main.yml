@@ -23,6 +23,8 @@ smallstep_db_name: 'smallstepdb'
 
 smallstep_reporting_enable: true
 smallstep_reporting_template: smallstep_report.sh
+smallstep_reporting_dest: /var/tmp
+smallstep_logrotate_days: 10
 
 # root/intermediate ca on yubikey?
 smallstep_yubikey_packages: false
