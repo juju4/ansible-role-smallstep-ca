@@ -21,6 +21,9 @@ smallstep_db_type: badgerv2
 smallstep_db_datasource: "postgresql://user:password@127.0.0.1:5432/"
 smallstep_db_name: 'smallstepdb'
 
+smallstep_reporting_enable: true
+smallstep_reporting_template: smallstep_report.sh
+
 # root/intermediate ca on yubikey?
 smallstep_yubikey_packages: false
 smallstep_yubikey_import: false

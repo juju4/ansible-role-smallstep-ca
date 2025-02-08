@@ -306,3 +306,8 @@
 
 - name: Import backup
   ansible.builtin.import_tasks: backup.yml
+
+- name: Import reporting
+  ansible.builtin.import_tasks: reporting.yml
+  when:
+    - smallstep_reporting_enable | bool
