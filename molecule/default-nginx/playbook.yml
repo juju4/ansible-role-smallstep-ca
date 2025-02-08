@@ -19,11 +19,11 @@
       - { p: "/etc/ssl/private/dhparam4.pem", perm: r }
       - { p: "/etc/ssl/private/{{ ansible_fqdn }}.key", perm: r }
     cert_san:
-      - "DNS:certs.internal"
-      - "DNS:certs"
-      - "DNS:{{ ansible_hostname }}"
-      - "DNS:{{ ansible_fqdn }}"
-      - "IP:{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+      - "certs.internal"
+      - "certs"
+      - "{{ ansible_hostname }}"
+      - "{{ ansible_fqdn }}"
+      - "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
     cert_use_cn_san: false
     stepca_args: '--provisioner smallstep-provisioner@ --ca-url=certs.internal:8443 --root=/var/lib/step/.step/certs/root_ca.crt --san=DNS:certs.internal --san=DNS:{{ ansible_hostname }} --san=IP:{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}'
   pre_tasks:
