@@ -40,6 +40,9 @@ jobs:
           - molecule_distro: 'ubuntu:24.04'
             experimental: false
             suite: default-postgres
+          - molecule_distro: 'ubuntu:24.04'
+            experimental: true
+            suite: default-nginx
     env:
       ANSIBLE_CALLBACKS_ENABLED: profile_tasks
       MOLECULE_NO_LOG: "false"
