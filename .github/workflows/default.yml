@@ -43,6 +43,9 @@ jobs:
           - molecule_distro: 'ubuntu:24.04'
             experimental: true
             suite: default-nginx
+          - molecule_distro: 'ubuntu:24.04'
+            experimental: true
+            suite: default-nginx-renewer
     env:
       ANSIBLE_CALLBACKS_ENABLED: profile_tasks
       MOLECULE_NO_LOG: "false"
