@@ -1,0 +1,11 @@
+---
+
+- name: Include json-update
+  ansible.builtin.include_tasks: json-update.yml
+  vars:
+    json_file: "{{ smallstep_rootdir }}/config/ca.json"
+    json_file_owner: step
+    json_changes:
+      - path: json2.authority.policy
+        value: "{{ smallstep_policy }}"
+    json_handler: "Restart ca service"

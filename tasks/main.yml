@@ -199,6 +199,11 @@
   when:
     - smallstep_db_type != 'badgerv2'
 
+- name: Policy
+  ansible.builtin.import_tasks: policy.yml
+  when:
+    - smallstep_policy_enable | bool
+
 - name: Get current provisioners
   ansible.builtin.command: "step ca provisioner list {{ smallstep_provisioner_args }}"
   become: true

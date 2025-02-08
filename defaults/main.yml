@@ -27,6 +27,43 @@ smallstep_yubikey_import: false
 smallstep_yubikey_import_slot1: 9a
 smallstep_yubikey_import_slot2: 9c
 
+# https://smallstep.com/docs/step-ca/policies/#policy-in-configuration-file
+smallstep_policy_enable: false
+smallstep_policy: |
+  {
+    "x509": {
+      "allow": {
+        "dns": ["*.local"],
+        "ip": ["192.168.0.0/24"]
+      },
+      "deny": {
+        "dns": ["forbidden.local"],
+        "ip": ["192.168.0.1"]
+      },
+      "allowWildcardNames": false,
+    },
+    "ssh": {
+      "user": {
+        "allow": {
+          "email": ["@local"]
+        },
+        "deny": {
+          "email": ["root@local"]
+        }
+      },
+      "host": {
+        "allow": {
+          "dns": ["*.local"],
+          "ip": ["192.168.0.0/24"]
+        },
+        "deny": {
+          "dns": ["forbidden.local"],
+          "ip": ["192.168.0.1"]
+        }
+      }
+    }
+  }
+
 # retrieve files to orchestrator?
 smallstep_backup_ca_crt: true
 smallstep_backup_provisioner_password: true
