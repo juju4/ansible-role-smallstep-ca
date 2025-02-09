@@ -12,6 +12,8 @@ platforms:
     privileged: true
     groups:
       - stepca_group
+    etc_hosts:
+      "certs.internal": "127.0.0.1"
 provisioner:
   name: ansible
   playbooks:
