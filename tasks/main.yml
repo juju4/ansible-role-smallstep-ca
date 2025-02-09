@@ -78,6 +78,11 @@
     mode: "0664"
   become: true
 
+- name: Ensure systemd is present
+  ansible.builtin.package:
+    name: systemd
+    state: present
+
 - name: Install systemd unit
   ansible.builtin.template:
     src: step-ca.service.j2

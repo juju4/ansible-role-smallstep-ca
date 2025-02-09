@@ -22,6 +22,13 @@
     cron_file: ansible_smallstep_reporting
   when: false
 
+- name: Ensure /etc/systemd/system exists
+  ansible.builtin.file:
+    path: /etc/systemd/system
+    mode: '0775'
+    owner: root
+    state: directory
+
 - name: Ensure service step-report.service is set
   ansible.builtin.template:
     src: "systemd-step-report.service.conf.j2"

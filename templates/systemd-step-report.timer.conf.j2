@@ -1,0 +1,11 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Timer for step ca report
+
+[Timer]
+Persistent=true
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target
