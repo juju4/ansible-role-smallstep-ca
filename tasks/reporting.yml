@@ -25,7 +25,7 @@
 - name: Ensure /etc/systemd/system exists
   ansible.builtin.file:
     path: /etc/systemd/system/step-report.service
-    mode: '0755'
+    mode: '0775'
     owner: root
     state: directory
 
