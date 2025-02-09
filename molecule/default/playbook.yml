@@ -15,6 +15,11 @@
         update_cache: yes
         cache_valid_time: 3600
       when: ansible_os_family == "Debian"
+    - name: RedHat | Idempotency check
+      ansible.builtin.command:
+        cmd: ls -la /usr/lib/systemd
+      changed_when: false
+      when: ansible_os_family == "RedHat"
 
   roles:
     - role: imntreal.smallstep_ca
