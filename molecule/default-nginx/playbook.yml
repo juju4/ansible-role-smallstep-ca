@@ -35,17 +35,6 @@
         update_cache: yes
         cache_valid_time: 3600
       when: ansible_os_family == "Debian"
-    - name: Ensure hostname in /etc/hosts
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        regexp: "{{ item.re }}"
-        line: "{{ item.l | default(omit) }}"
-        state: "{{ item.state | default('present') }}"
-        mode: '0644'
-      loop:
-        - { re: "^[^#].* certs.internal",
-            l: "{{ main_physical_ip | default(ansible_default_ipv4.address) }} {{ ansible_fqdn }} {{ ansible_hostname }} certs.internal"
-        }
 
   roles:
     - role: imntreal.smallstep_ca
