@@ -17,7 +17,7 @@ check_tee_output()
 check_tee_output
 
 date=$(date +%Y%m%d)
-journalctl_args="--since '1 day ago' -l --no-pager"
+journalctl_args="-l --no-pager"
 service=step-ca
 nginx_jsonlog=/var/log/nginx/stepca.access_json.log
 echo
@@ -29,18 +29,26 @@ echo
 # Ubuntu 22.04
 
 echo "** Sample"
-journalctl -xeu "${service}" ${journalctl_args} | tail -3
+journalctl -eu "${service}" ${journalctl_args} --since '1 day ago' | tail -3
+echo
+echo
 
 echo "** Event path"
-journalctl -xeu "${service}" ${journalctl_args} | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1@' | sort | uniq -c | sort -nr
+journalctl -eu "${service}" ${journalctl_args} --since '1 day ago' | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1@' | sort | uniq -c | sort -nr
 echo
 echo
 
 echo "** Events"
-journalctl -xeu "${service}" ${journalctl_args} | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1,\2,\3,\4@' | sort | uniq -c | sort -nr
-journalctl -xeu "${service}" ${journalctl_args} | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1,\2,\3,\4@' | sort | uniq -c | sort -nr
+journalctl -eu "${service}" ${journalctl_args} --since '1 day ago' | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\1,\2,\3,\4@' | sort | uniq -c | sort -nr
+echo
+echo
 
-if [ -f "${nginx_jsonlog}" ]; then
+echo "** Remote address"
+journalctl -eu "${service}" ${journalctl_args} --since '1 day ago' | sed 's@.*path=\(.*\) protocol=.*remote-address=\(.*\) request-id=.* status=\([0-9]*\) .*user-agent=\(.*\) user-id=.*@\2@' | sort | uniq -c | sort -nr
+echo
+echo
+
+if [ -f "${nginx_jsonlog}" ]; then
 echo "** Nginx path"
 jq -r '.uri' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
 echo "** Nginx remote_addr"
@@ -51,6 +59,8 @@ echo "** Nginx http_user_agent"
 jq -r '.http_user_agent' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
 echo "** Nginx failed queries"
 jq -r 'select(.status != "200" and .status != "201") | .uri + " " + .status + " by: " + .remote_addr + " ua: " + .http_user_agent' "${nginx_jsonlog}" | sort | uniq -c | sort -nr
+echo
+echo
 fi
 
 find {{ smallstep_reporting_dest }} -name 'smallstep-report-*' -mtime +{{ smallstep_logrotate_days|int }} -exec rm {} \; 2>/dev/null
