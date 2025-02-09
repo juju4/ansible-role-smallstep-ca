@@ -82,6 +82,9 @@
   ansible.builtin.package:
     name: systemd
     state: present
+  when:
+    # FIXME! ansible "SyntaxError: future feature annotations is not defined", "MODULE FAILURE: No start of json char found"
+    - not (ansible_os_family == 'RedHat' and ansible_distribution_major_version | int == 8)
 
 - name: Install systemd unit
   ansible.builtin.template:
@@ -315,4 +318,4 @@
 - name: Import reporting
   ansible.builtin.import_tasks: reporting.yml
   when:
-    - smallstep_reporting_enable | bool
+    - smallstep_reporting_enable | bool
