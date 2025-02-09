@@ -27,6 +27,11 @@
     cert_use_cn_san: false
     stepca_args: '--provisioner smallstep-provisioner@ --ca-url=certs.internal:8443 --root=/var/lib/step/.step/certs/root_ca.crt --san=DNS:certs.internal --san=DNS:{{ ansible_hostname }} --san=IP:{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}'
   pre_tasks:
+    - name: Debian | Refresh apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
 
   roles:
     - role: imntreal.smallstep_ca
