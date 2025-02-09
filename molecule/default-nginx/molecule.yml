@@ -13,7 +13,7 @@ platforms:
     groups:
       - stepca_group
     etc_hosts:
-      - "certs.internal": "{{ ansible_default_ipv4.address }}"
+      "certs.internal": "{{ ansible_default_ipv4.address }}"
 provisioner:
   name: ansible
   playbooks:
