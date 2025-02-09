@@ -25,7 +25,7 @@
 - name: Ensure /etc/systemd/system exists
   ansible.builtin.file:
     path: /etc/systemd/system
-    mode: '0775'
+    mode: '0755'
     owner: root
     state: directory
 
